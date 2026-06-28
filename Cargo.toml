@@ -1,6 +1,6 @@
 [package]
 name = "open-bcif"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["George Elkins"]
 description = "A high-performance streaming toolkit for BinaryCIF (BCIF) files."
