@@ -87,7 +87,7 @@ If you use `open-bcif` in your research, please cite it as:
   title = {open-bcif: High-performance streaming toolkit for BinaryCIF},
   year = {2026},
   url = {https://github.com/elkins/open-bcif},
-  version = {0.1.2}
+  version = {0.1.3}
 }
 ```
 
