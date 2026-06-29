@@ -194,4 +194,55 @@ mod tests {
 
         std::fs::remove_file(path).unwrap();
     }
+
+    #[test]
+    fn test_streaming_parser_edge_cases() {
+        // 1. skip_value in metadata (unknown key "extra")
+        let mut buf = Vec::new();
+        rmp::encode::write_map_len(&mut buf, 4).unwrap();
+        rmp::encode::write_str(&mut buf, "extra").unwrap();
+        rmp::encode::write_u32(&mut buf, 123).unwrap(); // will be skipped
+        rmp::encode::write_str(&mut buf, "version").unwrap();
+        rmp::encode::write_str(&mut buf, "1.0").unwrap();
+        rmp::encode::write_str(&mut buf, "encoder").unwrap();
+        rmp::encode::write_str(&mut buf, "test").unwrap();
+        rmp::encode::write_str(&mut buf, "dataBlocks").unwrap();
+        rmp::encode::write_array_len(&mut buf, 0).unwrap();
+
+        let mut parser = StreamingParser::new(std::io::Cursor::new(buf));
+        let (v, e, b) = parser.parse_file_metadata().unwrap();
+        assert_eq!(v, "1.0");
+        assert_eq!(e, "test");
+        assert_eq!(b, 0);
+
+        // 2. DataBlock incomplete
+        let mut buf = Vec::new();
+        rmp::encode::write_map_len(&mut buf, 1).unwrap();
+        rmp::encode::write_str(&mut buf, "header").unwrap();
+        rmp::encode::write_str(&mut buf, "BLOCK_1").unwrap();
+        let mut parser = StreamingParser::new(std::io::Cursor::new(buf));
+        assert!(parser.next_data_block_header().is_err());
+
+        // 3. Category incomplete (missing columns)
+        let mut buf = Vec::new();
+        rmp::encode::write_map_len(&mut buf, 2).unwrap();
+        rmp::encode::write_str(&mut buf, "name").unwrap();
+        rmp::encode::write_str(&mut buf, "_cat").unwrap();
+        rmp::encode::write_str(&mut buf, "rowCount").unwrap();
+        rmp::encode::write_u32(&mut buf, 10).unwrap();
+        let mut parser = StreamingParser::new(std::io::Cursor::new(buf));
+        assert!(parser.next_category_header().is_err());
+
+        // 4. Category columns not last
+        let mut buf = Vec::new();
+        rmp::encode::write_map_len(&mut buf, 3).unwrap();
+        rmp::encode::write_str(&mut buf, "name").unwrap();
+        rmp::encode::write_str(&mut buf, "_cat").unwrap();
+        rmp::encode::write_str(&mut buf, "columns").unwrap();
+        rmp::encode::write_array_len(&mut buf, 0).unwrap();
+        rmp::encode::write_str(&mut buf, "rowCount").unwrap();
+        rmp::encode::write_u32(&mut buf, 10).unwrap();
+        let mut parser = StreamingParser::new(std::io::Cursor::new(buf));
+        assert!(parser.next_category_header().is_err());
+    }
 }

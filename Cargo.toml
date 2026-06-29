@@ -40,3 +40,7 @@ harness = false
 name = "streaming_benchmarks"
 harness = false
 
+[package.metadata.release]
+pre-release-replacements = [
+  {file="README.md", search="version = \\{[0-9.]+\\}", replace="version = {{{version}}}", min=1}
+]

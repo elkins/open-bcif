@@ -103,4 +103,21 @@ mod tests {
         fs::remove_file(input).unwrap();
         fs::remove_file(output).unwrap();
     }
+
+    #[test]
+    fn test_convert_single_row_to_cif() {
+        let input = "test_conv_single_input.bcif";
+        let output = "test_conv_single_output.cif";
+        crate::test_utils::create_single_row_sample_bcif(input).unwrap();
+
+        convert(input, output, "cif").unwrap();
+
+        let content = fs::read_to_string(output).unwrap();
+        assert!(content.contains("data_SINGLE_ROW_BLOCK"));
+        assert!(content.contains("_single_row_category.id"));
+        assert!(content.contains("42"));
+
+        fs::remove_file(input).unwrap();
+        fs::remove_file(output).unwrap();
+    }
 }

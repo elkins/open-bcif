@@ -27,7 +27,7 @@ fn create_in_memory_bcif(num_blocks: usize) -> Vec<u8> {
     }
 
     let bcif = File {
-        version: "0.1.1".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
         encoder: "bench".to_string(),
         data_blocks,
     };

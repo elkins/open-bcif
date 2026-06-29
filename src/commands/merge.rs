@@ -77,4 +77,14 @@ mod tests {
         fs::remove_file(in2).unwrap();
         fs::remove_file(out).unwrap();
     }
+    #[test]
+    fn test_merge_empty_inputs() {
+        let out = "test_merged_empty.bcif";
+        let result = merge(&[], out);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "No input files provided for merge"
+        );
+    }
 }

@@ -272,4 +272,50 @@ mod tests {
         // 99.0 -> 0.0 + (99.0 + 0.5) * 1.0 = 99.5
         assert_eq!(decoded, vec![0.5, 99.5]);
     }
+
+    #[test]
+    fn test_decode_byte_array_float32() {
+        let val1 = 12.34f32.to_le_bytes();
+        let val2 = 56.78f32.to_le_bytes();
+        let data = vec![
+            val1[0], val1[1], val1[2], val1[3],
+            val2[0], val2[1], val2[2], val2[3],
+        ];
+        let decoded = decode_byte_array(&data, 32).unwrap();
+        assert!((decoded[0] - 12.34f32 as f64).abs() < 1e-6);
+        assert!((decoded[1] - 56.78f32 as f64).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_decode_integer_packing_errors_unsupported_byte_count_signed() {
+        let data = vec![1, 2, 3];
+        // Unsupported byte count for signed
+        let res = decode_integer_packing(&data, 4, false, 2);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_decode_integer_packing_unexpected_end_signed() {
+        let data = vec![1];
+        // Unexpected end for 16-bit signed
+        let res = decode_integer_packing(&data, 2, false, 2);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_decode_integer_packing_signed_16bit() {
+        // [32767, 32767, 10, 42] -> [65544, 42]
+        let data = vec![0xFF, 0x7F, 0xFF, 0x7F, 10, 0, 42, 0];
+        let decoded = decode_integer_packing(&data, 2, false, 2).unwrap();
+        assert_eq!(decoded, vec![65544.0, 42.0]);
+    }
+
+    #[test]
+    fn test_decode_string_array_unknown_placeholders() {
+        let string_data = "ABCDEF";
+        let offsets = vec![0, 3, 6]; 
+        let indices = vec![0, -1, -2, 1];
+        let decoded = decode_string_array(&indices, &offsets, string_data);
+        assert_eq!(decoded, vec!["ABC", ".", "?", "DEF"]);
+    }
 }
